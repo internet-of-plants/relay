@@ -4,7 +4,7 @@
 #include <relay.hpp>
 
 namespace relay {
-auto now() noexcept -> Moment { return Moment(0, 0, 0); }
+auto now() noexcept -> iop_hal::Moment { return iop_hal::Moment(0, 0, 0); }
 auto TimedRelay::actIfNeeded() noexcept -> bool { return false; }
 auto Relay::begin() const noexcept -> void {}
 auto Relay::setHigh() const noexcept -> void {}

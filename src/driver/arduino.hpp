@@ -11,17 +11,11 @@
 #undef OUTPUT
 
 namespace relay {
-auto now() noexcept -> Moment {
-    const auto rawtime = time(nullptr);
-    const auto *time = localtime(&rawtime);
-    return Moment(static_cast<uint8_t>(time->tm_hour), static_cast<uint8_t>(time->tm_min), static_cast<uint8_t>(time->tm_sec));
-}
-
 auto TimedRelay::actIfNeeded() noexcept -> bool {
     if (!this->next) return false;
-    if (Moment::now() < this->next) return false;
+    if (iop_hal::Moment::now() < this->next) return false;
 
-    std::optional<Moment> next;
+    std::optional<iop_hal::Moment> next;
     for (const auto & [moment, data]: this->states) {
         if (this->next == moment) {
             this->relay.set(data);

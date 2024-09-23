@@ -2,47 +2,11 @@
 #define IOP_LIB_SENSORS_RELAY_HPP
 
 #include <iop-hal/io.hpp>
+#include <iop-hal/device.hpp>
 #include <iop-hal/thread.hpp>
 
 #include <optional>
 #include <functional>
-
-namespace relay {
-class Moment;
-auto now() noexcept -> Moment;
-
-struct Moment {
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
-
-    Moment(uint8_t hour, uint8_t minute, uint8_t second) noexcept: hour(hour), minute(minute), second(second) {}
-
-    static auto now() noexcept -> Moment {
-        return relay::now();
-    }
-
-    auto operator==(const Moment & other) const noexcept -> bool {
-        return this->hour == other.hour && this->minute == other.hour && this->second == other.second;
-    }
-    auto operator< (const Moment & other) const noexcept -> bool {
-        return (this->hour >= 12 && other.hour < 12)
-            || this->hour < other.hour
-            || (this->hour == other.hour && this->minute < other.minute)
-            || (this->hour == other.hour && this->minute == other.minute && this->second < other.second);
-    }
-    auto operator> (const Moment & other) const noexcept -> bool { return other < *this; }
-    auto operator<=(const Moment & other) const noexcept -> bool { return !(*this > other); }
-    auto operator>=(const Moment & other) const noexcept -> bool { return !(*this < other); }
-};
-}
-
-template<>
-struct std::hash<relay::Moment> {
-    std::size_t operator()(const relay::Moment & moment) const noexcept {
-        return static_cast<size_t>(moment.hour) ^ (static_cast<size_t>(moment.minute) << 1) ^ (static_cast<size_t>(moment.second) << 2);
-    }
-};
 
 namespace relay {
 class Relay {
@@ -98,9 +62,9 @@ public:
 // Use `Relay::setFor`, `Relay::setHighFor` or `Relay::setLowFor` as they have more garantees
 class TimedRelay {
     Relay relay;
-    std::unordered_map<Moment, iop_hal::io::Data> states;
-    std::optional<std::pair<Moment, iop_hal::io::Data>> last;
-    std::optional<Moment> next;
+    std::unordered_map<iop_hal::Moment, iop_hal::io::Data> states;
+    std::optional<std::pair<iop_hal::Moment, iop_hal::io::Data>> last;
+    std::optional<iop_hal::Moment> next;
 public:
     TimedRelay(const iop_hal::PinRaw pin) noexcept: relay(pin) {}
     TimedRelay(Relay relay) noexcept: relay(std::move(relay)) {}
@@ -114,8 +78,8 @@ public:
         this->next = std::nullopt;
     }
 
-    auto setTime(const Moment moment, const iop_hal::io::Data data) noexcept -> void {
-        const auto now = Moment::now();
+    auto setTime(const iop_hal::Moment moment, const iop_hal::io::Data data) noexcept -> void {
+        const auto now = iop_hal::Moment::now();
         if (now > moment && (!this->last || this->last->first < moment)) {
             this->last = std::make_pair(moment, data);
             this->set(data);
